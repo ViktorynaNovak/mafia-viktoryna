@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -23,6 +24,7 @@
     --radius:10px;
     --shadow-safe:env(safe-area-inset-top,0px);
     --shadow-safe-b:env(safe-area-inset-bottom,0px);
+    --footer-h:80px;
   }
   @media (prefers-color-scheme: light){
     :root:not([data-theme="dark"]){
@@ -42,7 +44,7 @@
   }
   html{scroll-padding-top:var(--shadow-safe);}
   h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0 0 4px;}
-  .app{max-width:640px; margin:0 auto; padding:20px 16px 80px;}
+  .app{max-width:640px; margin:0 auto; padding:20px 16px calc(var(--footer-h) + 14px);}
   header.top{
     position:sticky; top:0; z-index:5;
     background:linear-gradient(180deg, var(--bg) 70%, transparent);
@@ -110,6 +112,16 @@
   .order-idx{font-family:'IBM Plex Mono',monospace; color:var(--muted); width:18px;}
   .order-name{flex:1;}
   .order-btns{display:flex; gap:4px;}
+  #screens{display:flex; flex-direction:column;}
+  @media (max-width: 380px), (max-height: 700px){
+    .app{padding:14px 12px calc(var(--footer-h) + 10px);}
+    .card{padding:12px 14px; margin-bottom:10px;}
+    .player-grid{grid-template-columns:repeat(6, 1fr); gap:6px;}
+    .player-btn{font-size:13px;}
+    .timer-display{font-size:42px; margin:2px 0 8px;}
+    .night-banner{padding:10px 12px; font-size:14px; margin-bottom:10px;}
+    .theme-text{font-size:16px; margin:10px 0;}
+  }
   .player-grid{
     display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin:10px 0;
   }
@@ -118,8 +130,8 @@
     font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:600; color:var(--text);
     display:flex; align-items:center; justify-content:center; position:relative;
   }
-  .player-btn.selected{border:3px dashed #ffffff !important; color:#fff;}
-  .player-btn.selected2{border:3px dashed #ffffff !important; color:#fff;}
+  .player-btn.selected{border:3px dashed var(--lamp) !important; color:#fff;}
+  .player-btn.selected2{border:3px dashed var(--lamp) !important; color:#fff;}
   .player-btn.selected2::after{
     content:'2'; position:absolute; bottom:1px; right:4px; font-size:10px; font-weight:700; color:#fff;
   }
@@ -138,6 +150,9 @@
   }
   .player-btn.immune::after{
     content:'🛡'; position:absolute; top:-2px; right:2px; font-size:12px;
+  }
+  .player-btn .role-icon{
+    position:absolute; top:-2px; left:2px; font-size:11px; line-height:1;
   }
   .player-btn.speaker-now{
     border:3px dashed #ffffff !important; color:#fff;
@@ -168,10 +183,12 @@
     position:fixed; left:0; right:0; bottom:0; z-index:5;
     background:linear-gradient(0deg, var(--bg) 65%, transparent);
     padding:10px 16px calc(14px + var(--shadow-safe-b));
-    display:flex; gap:8px; justify-content:center;
+    display:flex; flex-direction:column; gap:8px; align-items:center;
   }
   footer.nav .app-nav{max-width:640px; width:100%; display:flex; gap:8px;}
   footer.nav button{flex:1;}
+  .role-fix-row{max-width:640px; width:100%; display:flex;}
+  .role-fix-row button{flex:1; font-size:13px; padding:7px 10px;}
   .tag{display:inline-block; font-size:11px; padding:2px 7px; border-radius:20px; border:1px solid var(--line); color:var(--muted); font-family:'IBM Plex Mono',monospace;}
   .kv{display:flex; justify-content:space-between; font-size:14px; padding:5px 0;}
   .divider{height:1px; background:var(--line); margin:12px 0;}
@@ -182,10 +199,6 @@
 </style>
 </head>
 <body>
-<div id="splashOverlay" style="position:fixed; inset:0; z-index:100;">
-  <canvas id="splashCanvas" style="position:absolute; inset:0; width:100%; height:100%; z-index:1;"></canvas>
-  <button id="splashClose" style="position:fixed; top:calc(16px + env(safe-area-inset-top,0px)); right:16px; width:36px; height:36px; border-radius:50%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-size:17px; line-height:1; cursor:pointer; z-index:3;">✕</button>
-</div>
 <div class="app" id="app">
   <header class="top">
     <div>
@@ -219,7 +232,7 @@ const DEFAULT_ROLES = [
 const DEFAULT_NIGHT_ORDER = ['mafia_kill','don_check','zlodiy_block','maniac','courtesan','doctor','sheriff','journalist'];
 const STEP_LABEL = {
   mafia_kill:'Мафія і Дон — вбивство',
-  don_check:'Дон — перевірка шерифа',
+  don_check:'Дон — перевірка',
   zlodiy_block:'Злодій — блокування',
   maniac:'Маніяк — вбивство',
   courtesan:'Повія — блокування',
@@ -1342,6 +1355,25 @@ function recalcPeaceful(){
 
 let openCountPickerIdx = null;
 let playerCountPickerOpen = false;
+let voteCountPickerOpen = false;
+function renderVoteCountControl(count, maxVotes, onSet){
+  const wrap = el(`<div style="text-align:center;"></div>`);
+  const btn = el(`<button style="font-family:'IBM Plex Mono',monospace; font-size:40px; padding:8px 28px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; color:var(--text);">${count}</button>`);
+  wrap.appendChild(btn);
+  const pickerHost = el(`<div></div>`);
+  wrap.appendChild(pickerHost);
+  btn.addEventListener('click', ()=>{ voteCountPickerOpen = !voteCountPickerOpen; render(); });
+  if(voteCountPickerOpen){
+    const grid = el(`<div class="player-grid" style="margin-top:10px;"></div>`);
+    for(let n=0;n<=maxVotes;n++){
+      const b = el(`<button class="player-btn ${n===count?'selected':''}" style="aspect-ratio:auto; height:40px; font-size:14px;">${n}</button>`);
+      b.addEventListener('click', ()=>{ onSet(n); voteCountPickerOpen=false; saveGame(); render(); });
+      grid.appendChild(b);
+    }
+    pickerHost.appendChild(grid);
+  }
+  return wrap;
+}
 function renderSetup(root, nav){
   const s = state.settings;
   recalcPeaceful();
@@ -1403,7 +1435,8 @@ function renderSetup(root, nav){
         btn.addEventListener('click', ()=>{
           r.count = n;
           if(!['don','mafia','zlodiy','peaceful'].includes(r.id)){
-            r.active = n>0;
+            const hasNightAction = !(r.custom && r.actionType==='none');
+            r.active = n>0 && hasNightAction;
             if(r.active){ if(!s.nightOrder.includes(r.id)) s.nightOrder.push(r.id); }
             else { s.nightOrder = s.nightOrder.filter(x=>x!==r.id); }
           }
@@ -1469,35 +1502,80 @@ function renderSetup(root, nav){
   </div>`);
   card2.appendChild(totalBar);
 
+  const NIGHT_ACTION_OPTIONS = [
+    {v:'none', label:'Немає дії вночі'},
+    {v:'kill', label:'Вбиває гравця'},
+    {v:'block', label:'Блокує хід гравця'},
+    {v:'save', label:'Рятує гравця від смерті'},
+    {v:'check_color', label:'Перевіряє колір (команду) гравця'},
+    {v:'check_two', label:'Перевіряє двох гравців на спільну команду'},
+    {v:'check_role', label:'Дізнається точну роль гравця'},
+  ];
+  const DAY_NOTE_OPTIONS = [
+    {v:'', label:'Немає окремої дії вдень'},
+    {v:'Сьогодні має подвійний голос при голосуванні.', label:'Подвійний голос при голосуванні'},
+    {v:'Може прилюдно розкрити свою роль, якщо захоче.', label:'Може прилюдно розкрити роль'},
+    {v:'Може захистити одного гравця від вигнання цього дня.', label:'Може захистити гравця від вигнання'},
+  ];
   const addRoleBtn = el(`<button class="small ghost" style="margin-top:10px;">+ Додати роль</button>`);
   addRoleBtn.addEventListener('click', ()=>{
     const form = el(`<div class="card" style="margin-top:10px;">
       <label class="field-label">Назва нової ролі</label>
       <input type="text" id="newRoleName" placeholder="напр. Куртизанка">
       <label class="field-label" style="margin-top:10px;">Команда</label>
-      <div class="segmented">
+      <div class="segmented" id="teamSeg">
         <button class="small active" data-v="black">Чорна</button>
         <button class="small" data-v="red">Червона</button>
+        <button class="small" data-v="neutral">Сама за себе</button>
       </div>
+      <label class="field-label" style="margin-top:10px;">Що робить вночі</label>
+      <div class="segmented" id="nightSeg" style="flex-wrap:wrap;"></div>
+      <label class="field-label" style="margin-top:10px;">Що робить вдень (необов'язково)</label>
+      <div class="segmented" id="daySeg" style="flex-wrap:wrap;"></div>
       <div class="row" style="margin-top:12px; gap:8px;">
         <button class="ghost small" id="cancelNewRole">Скасувати</button>
         <button class="primary small" id="saveNewRole">Додати</button>
       </div>
     </div>`);
     let chosenTeam = 'black';
-    form.querySelectorAll('.segmented button').forEach(b=>{
+    let chosenAction = 'none';
+    let chosenDayNote = '';
+    form.querySelectorAll('#teamSeg button').forEach(b=>{
       b.addEventListener('click', ()=>{
         chosenTeam = b.dataset.v;
-        form.querySelectorAll('.segmented button').forEach(x=>x.classList.remove('active'));
+        form.querySelectorAll('#teamSeg button').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
       });
+    });
+    const nightSeg = form.querySelector('#nightSeg');
+    NIGHT_ACTION_OPTIONS.forEach((opt,i)=>{
+      const b = el(`<button class="small ${i===0?'active':''}">${opt.label}</button>`);
+      b.addEventListener('click', ()=>{
+        chosenAction = opt.v;
+        nightSeg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+      });
+      nightSeg.appendChild(b);
+    });
+    const daySeg = form.querySelector('#daySeg');
+    DAY_NOTE_OPTIONS.forEach((opt,i)=>{
+      const b = el(`<button class="small ${i===0?'active':''}">${opt.label}</button>`);
+      b.addEventListener('click', ()=>{
+        chosenDayNote = opt.v;
+        daySeg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+      });
+      daySeg.appendChild(b);
     });
     form.querySelector('#cancelNewRole').addEventListener('click', ()=>{ form.remove(); });
     form.querySelector('#saveNewRole').addEventListener('click', ()=>{
       const name = form.querySelector('#newRoleName').value.trim();
       if(!name) return;
       const id = 'custom_'+Date.now();
-      s.roles.push({id, name, team:chosenTeam, count:0, active:false, fixed:false, custom:true});
+      s.roles.push({
+        id, name, team:chosenTeam, count:0, active:false, fixed:false, custom:true,
+        teamChoice:true, actionType:chosenAction, dayNote:chosenDayNote,
+      });
       saveSettings();
       render();
     });
@@ -1506,37 +1584,40 @@ function renderSetup(root, nav){
   card2.appendChild(addRoleBtn);
 
   // night order
-  const card3 = el(`<div class="card"><h3>Порядок ночі</h3><div class="muted" style="margin-bottom:6px;">Хто прокидається за ким. Затримай палець на ролі і перетягни на потрібне місце.</div><div id="orderList" style="position:relative;"></div></div>`);
+  const card3 = el(`<div class="card"><h3>Порядок ночі</h3><div class="muted" style="margin-bottom:6px;">Хто прокидається за ким. Тягни за значок «⠿» праворуч, щоб змінити місце — решту рядка можна гортати як звичайний список.</div><div id="orderList" style="position:relative;"></div></div>`);
   root.appendChild(card3);
   const orderList = card3.querySelector('#orderList');
   if(s.nightOrder.length===0){
     orderList.appendChild(el(`<div class="empty-note">Немає активних ролей</div>`));
   }
   const orderRows = [];
+  const orderHandles = [];
   s.nightOrder.forEach((rid, idx)=>{
     const label = stepLabelFor(rid);
-    const row = el(`<div class="order-row" data-idx="${idx}" style="touch-action:none; user-select:none; background:var(--panel);">
+    const row = el(`<div class="order-row" data-idx="${idx}" style="user-select:none; background:var(--panel);">
       <span class="order-idx">${idx+1}</span>
       <span class="order-name">${label}</span>
-      <span class="muted" style="font-size:18px; letter-spacing:1px; cursor:grab;">⠿</span>
+      <span class="order-handle" style="touch-action:none; cursor:grab; font-size:20px; letter-spacing:1px; color:var(--muted); padding:10px 8px; margin:-10px -4px; display:flex; align-items:center;">⠿</span>
     </div>`);
     orderList.appendChild(row);
     orderRows.push(row);
+    orderHandles.push(row.querySelector('.order-handle'));
   });
 
   orderRows.forEach((row, startIdx)=>{
+    const handle = orderHandles[startIdx];
     let drag = null;
-    row.addEventListener('pointerdown', (e)=>{
+    handle.addEventListener('pointerdown', (e)=>{
       if(orderRows.length<2) return;
       const rowHeight = row.getBoundingClientRect().height;
       drag = { startY: e.clientY, rowHeight, from: startIdx, target: startIdx };
-      row.setPointerCapture(e.pointerId);
+      handle.setPointerCapture(e.pointerId);
       row.style.zIndex = '5';
       row.style.transition = 'none';
       row.style.boxShadow = '0 6px 18px rgba(0,0,0,.5)';
       orderRows.forEach(r=>{ if(r!==row) r.style.transition = 'transform 140ms ease'; });
     });
-    row.addEventListener('pointermove', (e)=>{
+    handle.addEventListener('pointermove', (e)=>{
       if(!drag) return;
       const deltaY = e.clientY - drag.startY;
       row.style.transform = `translateY(${deltaY}px)`;
@@ -1566,8 +1647,8 @@ function renderSetup(root, nav){
       drag = null;
       render();
     }
-    row.addEventListener('pointerup', endDrag);
-    row.addEventListener('pointercancel', endDrag);
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
   });
 
   // timers
@@ -1632,7 +1713,7 @@ function startGame(){
     lastDoctorTarget:null,
     log:[],
     nightResult:null,
-    immunePlayer:null,
+    immunePlayers:[],
   };
   state.screen = 'immunity';
   saveGame();
@@ -1695,28 +1776,37 @@ function renderTheme(root, nav){
 }
 
 /* ================= IMMUNITY SCREEN ================= */
+const MAX_IMMUNE = 3;
 function hasImmunity(playerNumber){
   const g = state.game;
-  return g && g.immunePlayer===playerNumber && g.round<=2;
+  return !!(g && Array.isArray(g.immunePlayers) && g.immunePlayers.includes(playerNumber) && g.round<=2);
 }
 function renderImmunity(root, nav){
   const g = state.game;
-  if(g.immuneSelection===undefined) g.immuneSelection = null;
+  if(!Array.isArray(g.immuneSelection)) g.immuneSelection = Array.isArray(g.immunePlayers) ? g.immunePlayers.slice() : [];
   root.appendChild(el(`<div class="card">
-    <h3>Імунний гравець</h3>
-    <div class="muted">Обери одного гравця, який матиме імунітет у першому раунді: День 1, Ніч 2 і День 2. Його не можна ні вбити, ні виставити на голосування. Ознайомча ніч у цей раунд не входить.</div>
+    <h3>Імунні гравці</h3>
+    <div class="muted">Обери до ${MAX_IMMUNE} гравців (або нікого), які матимуть імунітет у першому раунді: День 1, Ніч 2 і День 2. Їх не можна ні вбити, ні виставити на голосування. Ознайомча ніч у цей раунд не входить.</div>
   </div>`));
   const card = el(`<div class="card"></div>`);
   const grid = el(`<div class="player-grid"></div>`);
   g.players.forEach(p=>{
-    const btn = el(`<button class="player-btn ${g.immuneSelection===p.number?'selected':''}">${p.number}</button>`);
+    const selected = g.immuneSelection.includes(p.number);
+    const atLimit = g.immuneSelection.length >= MAX_IMMUNE;
+    const btn = el(`<button class="player-btn ${selected?'selected':''}">${p.number}</button>`);
+    if(!selected && atLimit) btn.disabled = true;
     btn.addEventListener('click', ()=>{
-      g.immuneSelection = (g.immuneSelection===p.number) ? null : p.number;
+      if(selected){
+        g.immuneSelection = g.immuneSelection.filter(n=>n!==p.number);
+      } else if(g.immuneSelection.length < MAX_IMMUNE){
+        g.immuneSelection.push(p.number);
+      }
       render();
     });
     grid.appendChild(btn);
   });
   card.appendChild(grid);
+  card.appendChild(el(`<div class="muted" style="margin-top:8px;">Обрано ${g.immuneSelection.length} / ${MAX_IMMUNE}</div>`));
   root.appendChild(card);
   const navWrap = el(`<div class="app-nav"></div>`);
   const back = el(`<button class="ghost">Змінити налаштування</button>`);
@@ -1724,16 +1814,16 @@ function renderImmunity(root, nav){
   const skip = el(`<button class="ghost">Без імунітету</button>`);
   skip.addEventListener('click', ()=>{
     pushUndo();
-    g.immunePlayer = null;
+    g.immunePlayers = [];
     state.screen = 'theme';
     g.screen = 'theme';
     saveGame();
     render();
   });
-  const next = el(`<button class="primary" ${g.immuneSelection==null?'disabled':''}>Підтвердити</button>`);
+  const next = el(`<button class="primary">Підтвердити</button>`);
   next.addEventListener('click', ()=>{
     pushUndo();
-    g.immunePlayer = g.immuneSelection;
+    g.immunePlayers = g.immuneSelection.slice();
     state.screen = 'theme';
     g.screen = 'theme';
     saveGame();
@@ -1795,12 +1885,28 @@ function finishAssign(){
   saveGame();
   beginDay();
 }
+function blackIntroIsLast(stepId){
+  const s = state.settings;
+  const mafia = roleById('mafia'), don = roleById('don');
+  const presentIds = ['mafia_kill','don_check'].filter(id=>{
+    if(id==='mafia_kill') return ((mafia?mafia.count:0) + (don?don.count:0)) > 0;
+    return (don?don.count:0) > 0;
+  });
+  const ordered = s.nightOrder.filter(id=>presentIds.includes(id));
+  return ordered.length>0 && ordered[ordered.length-1]===stepId;
+}
 function assignStepText(step){
-  const need = step.need;
-  if(step.stepId==='mafia_kill') return `Прокидається чорна команда — Мафія та Дон. Обери ${need} гравц${need===1?'я':'ів'}, які зараз розплющили очі.`;
-  if(step.stepId==='don_check') return `З цієї групи обери, хто саме Дон.`;
-  if(step.stepId==='zlodiy_block') return `Прокидається Злодій. Він мовчки піднімає руку, щоб мафія побачила, що він у їхній команді. Обери ${need} гравц${need===1?'я':'ів'}, який показав, що він Злодій.`;
-  return `Прокидається ${step.label}. Обери ${need} гравц${need===1?'я':'ів'}.`;
+  if(step.stepId==='mafia_kill'){
+    const zlodiy = roleById('zlodiy');
+    const hasZlodiy = zlodiy && zlodiy.count>0;
+    const base = `Прокидається мафія та знайомиться один з одним.${hasZlodiy ? ' Злодій піднімає руку, щоб мафія запам\'ятала його.' : ''}`;
+    return blackIntroIsLast('mafia_kill') ? `${base} Чорна команда засинає.` : base;
+  }
+  if(step.stepId==='don_check'){
+    const base = `Дон показує себе мафії (наприклад, піднімає руку), щоб мафія його запам'ятала.`;
+    return blackIntroIsLast('don_check') ? `${base} Чорна команда засинає.` : base;
+  }
+  return `Прокидається ${step.label}. ${step.label} знайомиться з ведучим і засинає.`;
 }
 function renderAcquaint(root, nav){
   const g = state.game;
@@ -1823,7 +1929,7 @@ function renderAcquaint(root, nav){
     const alreadyAssigned = !!p.roleId;
     const eligible = step.kind==='don_pick' ? g.blackGroupNumbers.includes(p.number) : !alreadyAssigned;
     const color = p.roleId ? roleColor(p.roleId) : null;
-    const btn = el(`<button class="player-btn ${g.assignSelection.includes(p.number)?'selected':''}" ${color?`style="background:${color}; border-color:${color};"`:''}>${p.number}</button>`);
+    const btn = el(`<button class="player-btn ${g.assignSelection.includes(p.number)?'selected':''}" ${color?`style="background:${color}; border-color:${color};"`:''}>${p.number}${p.roleId?roleIconSpan(p.roleId):''}</button>`);
     if(!eligible) btn.disabled = true;
     if(!eligible && alreadyAssigned) btn.classList.add('dead');
     btn.addEventListener('click', ()=>{
@@ -1875,18 +1981,50 @@ function renderAcquaint(root, nav){
 
 /* ================= NIGHT LOGIC ================= */
 function alivePlayers(){ return state.game.players.filter(p=>p.alive); }
+function maniacIsSolo(){
+  const maniacRole = roleById('maniac');
+  return !!(maniacRole && maniacRole.team==='neutral');
+}
 function computeWinner(){
   const alive = alivePlayers();
+  // team is mutated to 'neutral' when the maniac plays for himself, so the
+  // plain red/black filters below already exclude him from both sides.
   const blackCount = alive.filter(p=>{ const r=roleById(p.roleId); return r && r.team==='black'; }).length;
   const redCount = alive.filter(p=>{ const r=roleById(p.roleId); return r && r.team==='red'; }).length;
-  const maniacRole = roleById('maniac');
-  if(maniacRole && maniacRole.team==='neutral'){
-    const maniacAlive = alive.some(p=>p.roleId==='maniac');
-    if(maniacAlive && blackCount===1 && redCount===1) return 'maniac';
+  const soloManiac = maniacIsSolo();
+  const maniacAlive = soloManiac && alive.some(p=>p.roleId==='maniac') ? 1 : 0;
+
+  if(soloManiac && maniacAlive){
+    // maniac ends up alone with exactly one peaceful player — maniac wins outright
+    if(blackCount===0 && redCount===1) return 'maniac';
+    // maniac ends up alone with exactly one mafia — declared a draw
+    if(blackCount===1 && redCount===0) return 'draw';
+    // maniac is the sole survivor
+    if(blackCount===0 && redCount===0) return 'maniac';
   }
+
   if(blackCount===0) return 'red';
-  if(blackCount>=redCount) return 'black';
+
+  if(soloManiac && maniacAlive){
+    // with the maniac still alive and playing for himself, mafia needs to
+    // outnumber everyone else (peaceful + the maniac) combined, not just tie
+    if(blackCount > redCount + maniacAlive) return 'black';
+  } else {
+    if(blackCount>=redCount) return 'black';
+  }
   return null;
+}
+function aliveTeamCounts(){
+  const alive = alivePlayers();
+  const black = alive.filter(p=>{ const r=roleById(p.roleId); return r && r.team==='black'; }).length;
+  const red = alive.filter(p=>{ const r=roleById(p.roleId); return r && r.team==='red'; }).length;
+  const maniac = maniacIsSolo() ? (alive.some(p=>p.roleId==='maniac') ? 1 : 0) : null;
+  return { black, red, maniac };
+}
+function aliveTeamHintEl(){
+  const c = aliveTeamCounts();
+  const maniacPart = c.maniac!=null ? `, маніяк — ${c.maniac}` : '';
+  return el(`<div class="muted">👥 Живих: мирних — ${c.red}, мафії — ${c.black}${maniacPart}</div>`);
 }
 function playersWithRole(roleId){ return alivePlayers().filter(p=>p.roleId===roleId); }
 function blackTeamAlive(){ return alivePlayers().filter(p=>{ const r=roleById(p.roleId); return r && r.team==='black'; }); }
@@ -1898,11 +2036,17 @@ function beginNight(){
   const steps = [];
   order.forEach(stepId=>{
     if(stepId==='mafia_kill'){
-      if(blackTeamAlive().length>0) steps.push({id:'mafia_kill'});
+      // this step is for mafia/don deciding a kill together — if only the
+      // Zlodiy is left alive on the black team, HE does the killing via his
+      // own zlodiy_kill step below, so this step must not also ask for one
+      const hasMafiaOrDon = state.game.players.some(p=>p.alive && (p.roleId==='mafia' || p.roleId==='don'));
+      if(hasMafiaOrDon) steps.push({id:'mafia_kill'});
     } else if(stepId==='don_check'){
       const don = anyPlayersWithRole('don');
       const sheriffRole = roleById('sheriff');
-      if(don.length>0 && sheriffRole && sheriffRole.count>0) steps.push({id:'don_check', actor:don[0]});
+      const journalistRole = roleById('journalist');
+      const hasTarget = (sheriffRole && sheriffRole.count>0) || (journalistRole && journalistRole.count>0);
+      if(don.length>0 && hasTarget) steps.push({id:'don_check', actor:don[0]});
     } else if(stepId==='zlodiy_block'){
       const z = anyPlayersWithRole('zlodiy');
       if(z.length>0){
@@ -1917,7 +2061,7 @@ function beginNight(){
   g.nightSteps = steps;
   g.nightStepIndex = -1;
   g.nightBlockedNumbers = [];
-  g.nightResults = { mafiaVictim:null, maniacVictim:null, savedNumber:null, zlodiyKillVictim:null, checks:[] };
+  g.nightResults = { mafiaVictim:null, maniacVictim:null, savedNumbers:[], zlodiyKillVictim:null, customKills:{}, checks:[] };
   g.nightHistory = [];
   g.screen = 'night';
   state.screen = 'night';
@@ -1956,18 +2100,31 @@ function stepNeedsSkip(step){
   return false;
 }
 
-function renderInlineNotes(root){
-  const card = el(`<div class="card" style="padding:10px 14px;"></div>`);
-  card.appendChild(el(`<div class="muted" style="font-size:11px; margin-bottom:4px;">МОЇ ПІДКАЗКИ (тицяй, щоб писати)</div>`));
-  const area = document.createElement('textarea');
-  area.style.cssText = 'width:100%; min-height:60px; max-height:150px; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; resize:vertical; line-height:1.4;';
-  area.placeholder = 'напр. один палець вгору — чорний, вниз — червоний...';
-  area.value = state.settings.customNotes || '';
-  area.addEventListener('input', e=>{
-    state.settings.customNotes = e.target.value;
+function renderInlineNotes(root, opts){
+  opts = opts || {};
+  const expanded = !!state.settings.notesExpanded;
+  const card = el(`<div class="card" style="padding:10px 14px;${opts.order!=null?` order:${opts.order};`:''}"></div>`);
+  const header = el(`<div class="row between" style="cursor:pointer;">
+    <span class="muted" style="font-size:11px;">МОЇ ПІДКАЗКИ${(!expanded && state.settings.customNotes)?' ✏️':''}</span>
+    <span class="muted" style="font-size:11px;">${expanded?'сховати ▲':'показати ▼'}</span>
+  </div>`);
+  header.addEventListener('click', ()=>{
+    state.settings.notesExpanded = !expanded;
     saveSettings();
+    render();
   });
-  card.appendChild(area);
+  card.appendChild(header);
+  if(expanded){
+    const area = document.createElement('textarea');
+    area.style.cssText = 'width:100%; min-height:60px; max-height:150px; background:var(--panel-2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; resize:vertical; line-height:1.4; margin-top:8px;';
+    area.placeholder = 'напр. один палець вгору — чорний, вниз — червоний...';
+    area.value = state.settings.customNotes || '';
+    area.addEventListener('input', e=>{
+      state.settings.customNotes = e.target.value;
+      saveSettings();
+    });
+    card.appendChild(area);
+  }
   root.appendChild(card);
 }
 function roleColor(roleId){
@@ -1977,6 +2134,17 @@ function roleColor(roleId){
   };
   return colors[roleId] || null;
 }
+function roleIcon(roleId){
+  const icons = {
+    mafia:'🔫', don:'👑', zlodiy:'🥷',
+    sheriff:'⭐', doctor:'✚', journalist:'🖊️', maniac:'🔪', courtesan:'💋',
+  };
+  return icons[roleId] || '';
+}
+function roleIconSpan(roleId){
+  const icon = roleIcon(roleId);
+  return icon ? `<span class="role-icon">${icon}</span>` : '';
+}
 function wakeRoleName(stepId){
   if(stepId==='mafia_kill') return 'Мафія та Дон';
   if(stepId==='don_check') return 'Дон';
@@ -1985,26 +2153,34 @@ function wakeRoleName(stepId){
   return r ? r.name : stepId;
 }
 const ACTION_CLAUSE = {
-  mafia_kill: 'і обирають, кого вбити цієї ночі',
+  mafia_kill: 'і обирають свою жертву',
+  don_check: 'і робить свою перевірку',
   zlodiy_block: 'і блокує хід одного гравця',
   zlodiy_kill: 'і цієї ночі вбиває сам',
   maniac: 'і обирає свою жертву',
   courtesan: 'і блокує хід одного гравця',
-  doctor: 'і обирає, кого врятувати',
-  sheriff: 'і перевіряє одного гравця',
-  journalist: 'і перевіряє одразу двох гравців',
+  doctor: 'і обирає, кого буде лікувати цієї ночі',
+  sheriff: 'і робить свою перевірку',
+  journalist: 'і робить свою перевірку',
 };
 function nightTransitionText(index){
   const g = state.game;
   const stepId = g.nightSteps[index].id;
-  if(stepId==='don_check'){
-    return 'Мафія засинає, а Дон залишається — і робить свою перевірку.';
-  }
   const currentName = wakeRoleName(stepId);
-  const clause = ACTION_CLAUSE[stepId] ? ` ${ACTION_CLAUSE[stepId]}` : '';
+  let clauseText = ACTION_CLAUSE[stepId];
+  if(!clauseText){
+    const r = roleById(stepId);
+    if(r && r.custom){
+      clauseText = {
+        kill:'і обирає свою жертву', block:'і блокує хід одного гравця', save:'і рятує одного гравця',
+        check_color:'і робить свою перевірку', check_two:'і робить свою перевірку',
+        check_role:'і робить свою перевірку',
+      }[r.actionType];
+    }
+  }
+  const clause = clauseText ? ` ${clauseText}` : '';
   if(index===0) return `Місто засинає. Прокидається ${currentName}${clause}.`;
-  const prevName = wakeRoleName(g.nightSteps[index-1].id);
-  return `${prevName} засинає. Прокидається ${currentName}${clause}.`;
+  return `Прокидається ${currentName}${clause}.`;
 }
 
 
@@ -2016,8 +2192,10 @@ function renderNight(root, nav){
   }
 
   root.appendChild(el(`<div class="tag" style="margin-bottom:8px; display:inline-block;">Ніч ${g.round}</div>`));
-  if(g.round<=2 && state.game.immunePlayer!=null){
-    root.appendChild(el(`<div class="night-banner">🛡 Гравець №${state.game.immunePlayer} має імунітет цього раунду — його не можна вбити цієї ночі.</div>`));
+  if(g.round<=2 && Array.isArray(g.immunePlayers) && g.immunePlayers.length>0){
+    const names = g.immunePlayers.map(n=>'№'+n).join(', ');
+    const many = g.immunePlayers.length>1;
+    root.appendChild(el(`<div class="night-banner">🛡 ${many?'Гравці':'Гравець'} ${names} ма${many?'ють':'є'} імунітет цього раунду — ${many?'їх':'його'} не можна вбити цієї ночі.</div>`));
   }
   renderInlineNotes(root);
   const prog = el(`<div class="step-progress"></div>`);
@@ -2035,7 +2213,8 @@ function renderNight(root, nav){
   }
 
   if(stepNeedsSkip(step)){
-    root.appendChild(el(`<div class="night-banner">Гравець №${step.actor.number} (${roleById(step.actor.roleId).name}) заблокований Злодієм цієї ночі. Дія не відбувається.</div>`));
+    const wakeText = nightTransitionText(g.nightStepIndex);
+    root.appendChild(el(`<div class="night-banner">${wakeText}<br><br>Але гравець №${step.actor.number} (${roleById(step.actor.roleId).name}) заблокований цієї ночі — дія не відбувається, і він одразу засинає.</div>`));
     const navWrap = el(`<div class="app-nav"></div>`);
     const backBtn = el(`<button class="ghost">Назад</button>`);
     backBtn.disabled = undoStack.length===0;
@@ -2053,13 +2232,13 @@ function renderNight(root, nav){
   if(step.actor){
     const curActor = state.game.players.find(pl=>pl.number===step.actor.number);
     if(curActor && !curActor.alive){
-      root.appendChild(el(`<div class="night-banner"><b>${STEP_LABEL[step.id]||''}</b><br>${text}</div>`));
+      root.appendChild(el(`<div class="night-banner"><b>${stepLabelFor(step.id)}</b><br>${text}</div>`));
       root.appendChild(el(`<div class="row" style="align-items:center; gap:10px; background:var(--danger-dim); border:1px solid var(--danger); border-radius:8px; padding:10px 14px; margin-bottom:12px;">
         <span style="font-size:26px; color:var(--danger); font-weight:800;">!</span>
         <span style="font-size:14px; line-height:1.5;">Цей гравець уже мертвий — вибору немає. Просто витримай паузу і скажи слова вголос, щоб не видати цього.</span>
       </div>`));
       const card = el(`<div class="card"></div>`);
-      renderTimerBlock(card, 10, ()=>{}, `Пауза · 10 сек`);
+      renderTimerBlock(card, 10, ()=>{}, `Пауза · 10 сек`, {id:`night-pause-${g.nightStepIndex}`});
       root.appendChild(card);
       const navWrap = el(`<div class="app-nav"></div>`);
       const backBtn = el(`<button class="ghost">Назад</button>`);
@@ -2074,9 +2253,12 @@ function renderNight(root, nav){
     }
   }
 
-  root.appendChild(el(`<div class="night-banner"><b>${STEP_LABEL[step.id]||''}</b><br>${text}</div>`));
+  const sleeperName = wakeRoleName(step.id);
+  const sleepClosing = step.id==='mafia_kill' ? `${sleeperName} зробили вибір. ${sleeperName} засинають.` : `${sleeperName} засинає.`;
+  root.appendChild(el(`<div class="night-banner"><b>${stepLabelFor(step.id)}</b><br>${text}<br><br>${sleepClosing}</div>`));
 
-  const needTwo = step.id === 'journalist';
+  const stepRoleForTwo = roleById(step.id);
+  const needTwo = step.id === 'journalist' || (stepRoleForTwo && stepRoleForTwo.custom && stepRoleForTwo.actionType==='check_two');
   const card = el(`<div class="card"></div>`);
 
   const presentRoleIds = [...new Set(state.game.players.map(p=>p.roleId).filter(rid=>roleColor(rid)))];
@@ -2084,7 +2266,7 @@ function renderNight(root, nav){
     const legend = el(`<div class="row wrap" style="gap:10px; margin-bottom:8px; font-size:12px;"></div>`);
     presentRoleIds.forEach(rid=>{
       const r = roleById(rid);
-      legend.appendChild(el(`<span class="row" style="gap:5px;"><span style="display:inline-block; width:10px; height:10px; border-radius:3px; background:${roleColor(rid)};"></span>${r?r.name:rid}</span>`));
+      legend.appendChild(el(`<span class="row" style="gap:5px;"><span style="display:inline-block; width:10px; height:10px; border-radius:3px; background:${roleColor(rid)};"></span>${roleIcon(rid)} ${r?r.name:rid}</span>`));
     });
     card.appendChild(legend);
   }
@@ -2092,11 +2274,12 @@ function renderNight(root, nav){
   const grid = el(`<div class="player-grid"></div>`);
   const dead = state.game.players.filter(p=>!p.alive).map(p=>p.number);
   const forbid = getForbiddenTarget(step);
-  const isKillStep = ['mafia_kill','maniac','zlodiy_kill'].includes(step.id);
+  const stepRoleForKillCheck = roleById(step.id);
+  const isKillStep = ['mafia_kill','maniac','zlodiy_kill'].includes(step.id) || (stepRoleForKillCheck && stepRoleForKillCheck.custom && stepRoleForKillCheck.actionType==='kill');
   state.game.players.forEach(p=>{
     const color = roleColor(p.roleId);
     const immune = isKillStep && hasImmunity(p.number);
-    const btn = el(`<button class="player-btn ${!p.alive?'dead':''} ${(g.nightBlockedNumbers||[]).includes(p.number)?'blocked':''} ${forbid===p.number?'forbidden':''} ${immune?'immune':''}" ${color?`style="background:${color}; border-color:${color};"`:''}>${p.number}</button>`);
+    const btn = el(`<button class="player-btn ${!p.alive?'dead':''} ${(g.nightBlockedNumbers||[]).includes(p.number)?'blocked':''} ${forbid===p.number?'forbidden':''} ${immune?'immune':''}" ${color?`style="background:${color}; border-color:${color};"`:''}>${p.number}${roleIconSpan(p.roleId)}</button>`);
     if(!p.alive) btn.disabled = true;
     if(forbid===p.number) btn.disabled = true;
     if(immune) btn.disabled = true;
@@ -2123,8 +2306,10 @@ function renderNight(root, nav){
   if(forbid){
     card.appendChild(el(`<div class="muted">* Гравець №${forbid} — не можна обрати повторно (минулого разу вже обирали).</div>`));
   }
-  if(isKillStep && g.immunePlayer!=null && g.round<=2){
-    card.appendChild(el(`<div class="muted">🛡 Гравець №${g.immunePlayer} має імунітет цього раунду — вбити його не можна.</div>`));
+  if(isKillStep && Array.isArray(g.immunePlayers) && g.immunePlayers.length>0 && g.round<=2){
+    const names = g.immunePlayers.map(n=>'№'+n).join(', ');
+    const many = g.immunePlayers.length>1;
+    card.appendChild(el(`<div class="muted">🛡 ${many?'Гравці':'Гравець'} ${names} ма${many?'ють':'є'} імунітет цього раунду — вбити ${many?'їх':'його'} не можна.</div>`));
   }
   root.appendChild(card);
 
@@ -2138,7 +2323,7 @@ function renderNight(root, nav){
   backBtn.disabled = undoStack.length===0;
   backBtn.addEventListener('click', universalGoBack);
   navWrap.appendChild(backBtn);
-  const skip = el(`<button class="ghost">Пропустити</button>`);
+  const skip = el(`<button class="ghost">${isKillStep ? 'Постріл у повітря (нікого)' : 'Пропустити'}</button>`);
   skip.addEventListener('click', ()=>{ pushUndo(); recordStepResult(step, null); advanceNightStep(); });
   navWrap.appendChild(skip);
   if(step.actor){
@@ -2170,8 +2355,8 @@ function liveCheckHint(step, selection){
   const g = state.game;
   if(step.id==='don_check'){
     const t = g.players.find(p=>p.number===selection[0]);
-    const isSheriff = t && t.roleId==='sheriff';
-    return `Якщо підтвердиш: скажи Дону наодинці — гравець №${selection[0]} ${isSheriff?'це Шериф':'не Шериф'}.`;
+    const found = t && t.roleId==='sheriff' ? 'Шериф' : (t && t.roleId==='journalist' ? 'Журналіст' : null);
+    return `Якщо підтвердиш: скажи Дону наодинці — гравець №${selection[0]} ${found ? `це ${found}` : 'не Шериф і не Журналіст'}.`;
   }
   if(step.id==='sheriff'){
     const t = g.players.find(p=>p.number===selection[0]);
@@ -2196,6 +2381,7 @@ function getForbiddenTarget(step){
   if(step.id==='zlodiy_block') return g.lastZlodiyTarget;
   if(step.id==='courtesan') return g.lastCourtesanTarget;
   if(step.id==='doctor') return g.lastDoctorTarget;
+  if(g.lastCustomTarget && g.lastCustomTarget[step.id]!=null) return g.lastCustomTarget[step.id];
   return null;
 }
 
@@ -2208,11 +2394,20 @@ function recordStepResult(step, selection){
   } else if(step.id==='don_check'){
     if(selection){
       const target = g.players.find(p=>p.number===selection[0]);
-      const isSheriff = target && target.roleId==='sheriff';
-      res.checks.push({type:'don', target:selection[0], result: isSheriff});
+      const found = target && target.roleId==='sheriff' ? 'sheriff' : (target && target.roleId==='journalist' ? 'journalist' : null);
+      res.checks.push({type:'don', target:selection[0], result: found});
     }
   } else if(step.id==='zlodiy_block'){
-    if(selection){ g.nightBlockedNumbers.push(selection[0]); }
+    if(selection){
+      // Злодій тикає на будь-кого (щоб не видати цілі), але не бачить, хто саме
+      // мафія/дон, тож фізично не може їх заблокувати — блок на чорну команду
+      // просто не спрацьовує, хоча хід виглядає так само, як завжди.
+      const target = g.players.find(pl=>pl.number===selection[0]);
+      const targetRole = target ? roleById(target.roleId) : null;
+      if(!targetRole || targetRole.team!=='black'){
+        g.nightBlockedNumbers.push(selection[0]);
+      }
+    }
     g.lastZlodiyTarget = selection ? selection[0] : null;
   } else if(step.id==='courtesan'){
     if(selection){ g.nightBlockedNumbers.push(selection[0]); }
@@ -2222,7 +2417,7 @@ function recordStepResult(step, selection){
   } else if(step.id==='maniac'){
     res.maniacVictim = selection ? selection[0] : null;
   } else if(step.id==='doctor'){
-    res.savedNumber = selection ? selection[0] : null;
+    if(selection) res.savedNumbers.push(selection[0]);
     g.lastDoctorTarget = selection ? selection[0] : null;
   } else if(step.id==='sheriff'){
     if(selection){
@@ -2237,6 +2432,40 @@ function recordStepResult(step, selection){
       const r1 = roleById(t1.roleId), r2 = roleById(t2.roleId);
       res.checks.push({type:'journalist', targets:selection, sameTeam: r1 && r2 ? (r1.team===r2.team) : null});
     }
+  } else {
+    // custom role, dispatched by its configured action type
+    const role = roleById(step.id);
+    if(role && role.custom){
+      g.lastCustomTarget = g.lastCustomTarget || {};
+      if(role.actionType==='kill'){
+        res.customKills[step.id] = selection ? selection[0] : null;
+      } else if(role.actionType==='block'){
+        if(selection){ g.nightBlockedNumbers = g.nightBlockedNumbers || []; g.nightBlockedNumbers.push(selection[0]); }
+        g.lastCustomTarget[step.id] = selection ? selection[0] : null;
+      } else if(role.actionType==='save'){
+        if(selection) res.savedNumbers.push(selection[0]);
+        g.lastCustomTarget[step.id] = selection ? selection[0] : null;
+      } else if(role.actionType==='check_color'){
+        if(selection){
+          const target = g.players.find(p=>p.number===selection[0]);
+          const r = roleById(target.roleId);
+          res.checks.push({type:'custom_color', roleName:role.name, target:selection[0], result: r ? r.team : null});
+        }
+      } else if(role.actionType==='check_two'){
+        if(selection && selection.length===2){
+          const t1 = g.players.find(p=>p.number===selection[0]);
+          const t2 = g.players.find(p=>p.number===selection[1]);
+          const r1 = roleById(t1.roleId), r2 = roleById(t2.roleId);
+          res.checks.push({type:'custom_two', roleName:role.name, targets:selection, sameTeam: r1 && r2 ? (r1.team===r2.team) : null});
+        }
+      } else if(role.actionType==='check_role'){
+        if(selection){
+          const target = g.players.find(p=>p.number===selection[0]);
+          const r = roleById(target.roleId);
+          res.checks.push({type:'custom_role', roleName:role.name, target:selection[0], result: r ? r.name : null});
+        }
+      }
+    }
   }
   saveGame();
 }
@@ -2246,11 +2475,12 @@ function finishNight(){
   const res = g.nightResults;
   const blocked = g.nightBlockedNumbers || [];
 
-  // safety net: the immune player can't die even if somehow targeted
-  if(g.round<=2 && g.immunePlayer!=null){
-    if(res.mafiaVictim===g.immunePlayer) res.mafiaVictim = null;
-    if(res.maniacVictim===g.immunePlayer) res.maniacVictim = null;
-    if(res.zlodiyKillVictim===g.immunePlayer) res.zlodiyKillVictim = null;
+  // safety net: immune players can't die even if somehow targeted
+  if(g.round<=2 && Array.isArray(g.immunePlayers) && g.immunePlayers.length>0){
+    if(g.immunePlayers.includes(res.mafiaVictim)) res.mafiaVictim = null;
+    if(g.immunePlayers.includes(res.maniacVictim)) res.maniacVictim = null;
+    if(g.immunePlayers.includes(res.zlodiyKillVictim)) res.zlodiyKillVictim = null;
+    Object.keys(res.customKills||{}).forEach(rid=>{ if(g.immunePlayers.includes(res.customKills[rid])) res.customKills[rid] = null; });
   }
 
   // if a block hit the black team's decision-maker, the mafia kill doesn't happen
@@ -2266,15 +2496,22 @@ function finishNight(){
     res.mafiaVictim = null;
   }
 
+  const saved = res.savedNumbers || [];
   const deaths = new Set();
-  if(res.mafiaVictim && res.mafiaVictim !== res.savedNumber) deaths.add(res.mafiaVictim);
-  if(res.maniacVictim && res.maniacVictim !== res.savedNumber) deaths.add(res.maniacVictim);
-  if(res.zlodiyKillVictim && res.zlodiyKillVictim !== res.savedNumber) deaths.add(res.zlodiyKillVictim);
+  if(res.mafiaVictim && !saved.includes(res.mafiaVictim)) deaths.add(res.mafiaVictim);
+  if(res.maniacVictim && !saved.includes(res.maniacVictim)) deaths.add(res.maniacVictim);
+  if(res.zlodiyKillVictim && !saved.includes(res.zlodiyKillVictim)) deaths.add(res.zlodiyKillVictim);
+  Object.values(res.customKills||{}).forEach(n=>{ if(n && !saved.includes(n)) deaths.add(n); });
   deaths.forEach(n=>{
     const p = g.players.find(pl=>pl.number===n);
     if(p) p.alive = false;
   });
-  g.nightSummary = { deaths:[...deaths], checks: res.checks };
+  const shuffledDeaths = [...deaths];
+  for(let i=shuffledDeaths.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [shuffledDeaths[i], shuffledDeaths[j]] = [shuffledDeaths[j], shuffledDeaths[i]];
+  }
+  g.nightSummary = { deaths:shuffledDeaths, checks: res.checks };
   g.log.push({round:g.round, type:'night', summary:g.nightSummary});
   g.screen = 'night-summary';
   saveGame();
@@ -2300,8 +2537,10 @@ function renderNightSummary(root, nav){
 
   if(sum.phase==='death-announce'){
     const num = sum.deaths[sum.deathIdx];
-    const prefix = sum.deathIdx===0 ? 'Місто прокидається, але, на жаль, без гравця під номером' : 'Також, на жаль, без гравця під номером';
-    root.appendChild(el(`<div class="card"><div class="theme-text">${prefix} ${num}.</div></div>`));
+    const text = sum.deathIdx===0
+      ? `Місто прокидається! Цієї ночі сталося дещо страшне... Місто прокинулося, але не прокинувся гравець під номером ${num}.`
+      : `А також не прокинувся гравець під номером ${num}.`;
+    root.appendChild(el(`<div class="card"><div class="theme-text">${text}</div></div>`));
     const next = el(`<button class="primary">Далі — останнє слово</button>`);
     next.addEventListener('click', ()=>{ pushUndo(); sum.phase='death-lastword'; saveGame(); render(); });
     navWrap.appendChild(backBtn); navWrap.appendChild(next);
@@ -2311,9 +2550,9 @@ function renderNightSummary(root, nav){
 
   if(sum.phase==='death-lastword'){
     const num = sum.deaths[sum.deathIdx];
-    root.appendChild(el(`<div class="night-banner">Останнє слово гравця №${num}.</div>`));
+    root.appendChild(el(`<div class="night-banner">Гравець номер ${num}, у вас є ${state.settings.timers.lastWord} секунд на останнє слово.</div>`));
     const card = el(`<div class="card"></div>`);
-    renderTimerBlock(card, state.settings.timers.lastWord, ()=>{}, `№${num} · ${state.settings.timers.lastWord} сек`);
+    renderTimerBlock(card, state.settings.timers.lastWord, ()=>{}, `№${num} · ${state.settings.timers.lastWord} сек`, {id:`night-lastword-${num}-${g.round}`});
     root.appendChild(card);
     const isLastDeath = sum.deathIdx >= sum.deaths.length-1;
     const next = el(`<button class="primary">${isLastDeath ? 'Далі' : 'Наступний загиблий'}</button>`);
@@ -2331,15 +2570,13 @@ function renderNightSummary(root, nav){
 
   // phase 'done'
   if(sum.deaths.length===0){
-    root.appendChild(el(`<div class="card"><div class="theme-text">Місто прокидається. Цієї ночі ніхто не загинув.</div></div>`));
+    root.appendChild(el(`<div class="card"><div class="theme-text">Місто прокидається! Цієї ночі ніхто не загинув.</div></div>`));
   }
   const winner = computeWinner();
   if(winner==='red'){ root.appendChild(el(`<div class="night-banner">${(g.theme&&g.theme.peacefulWin)||'Мафії більше немає. Мирні перемагають!'}</div>`)); }
   else if(winner==='black'){ root.appendChild(el(`<div class="night-banner">${(g.theme&&g.theme.mafiaWin)||'Мафію вже не переголосувати. Мафія перемагає!'}</div>`)); }
-  else if(winner==='maniac'){ root.appendChild(el(`<div class="night-banner">Лишились тільки Маніяк і по одному з кожної команди. Маніяк переміг сам!</div>`)); }
-  else if(sum.deaths.length>0){
-    root.appendChild(el(`<div class="card"><div class="muted">Ніч закінчилась. Можна переходити до денного обговорення.</div></div>`));
-  }
+  else if(winner==='maniac'){ root.appendChild(el(`<div class="night-banner">Маніяк лишився сам на сам з мирним і переміг!</div>`)); }
+  else if(winner==='draw'){ root.appendChild(el(`<div class="night-banner">Лишились тільки Маніяк і один мафіозі — нічия.</div>`)); }
 
   navWrap.appendChild(backBtn);
   if(winner){
@@ -2373,7 +2610,13 @@ function computeSpeechOrder(){
   const s = state.settings;
   const g = state.game;
   const n = s.playerCount;
-  const startNum = ((g.round - 1) % n) + 1;
+  // cw: round 1 starts at player 1 and climbs (1,2,3,...).
+  // ccw: round 1 starts at the LAST player and counts down (n, n-1, ..., 1),
+  // and each following day the starting player shifts one further down
+  // (round 2 starts at n-1, etc.), wrapping back around to n again.
+  const startNum = s.direction==='ccw'
+    ? n - ((g.round - 1) % n)
+    : ((g.round - 1) % n) + 1;
   const order = [];
   for(let i=0;i<n;i++){
     let num;
@@ -2415,15 +2658,46 @@ function dayAdvanceStage(){
   render();
 }
 
-let timerHandle = null;
-function stopTimer(){ if(timerHandle){ clearInterval(timerHandle); timerHandle=null; } }
+let activeTimer = null; // {id, remaining, seconds, running, handle, onDone, autoStarted, disp, startBtn, pauseBtn}
+function stopTimer(){ if(activeTimer && activeTimer.handle){ clearInterval(activeTimer.handle); activeTimer.handle=null; } }
 
-function renderTimerBlock(container, seconds, onDone, label){
-  let remaining = seconds;
-  let running = false;
+function timerTick(){
+  const st = activeTimer;
+  if(!st) return;
+  st.remaining--;
+  if(st.disp){
+    st.disp.textContent = st.remaining;
+    if(st.remaining<=5) st.disp.classList.add('warn'); else st.disp.classList.remove('warn');
+  }
+  if(st.remaining<=0){
+    if(st.handle){ clearInterval(st.handle); st.handle=null; }
+    st.running = false;
+    if(st.startBtn) st.startBtn.classList.remove('timer-btn-active');
+    if(st.pauseBtn) st.pauseBtn.classList.remove('timer-btn-active');
+    try{ navigator.vibrate && navigator.vibrate([120,60,120]); }catch(e){}
+    if(st.onDone) st.onDone();
+  }
+}
+
+// opts: {id, autoStart} — same id across re-renders keeps the countdown running
+// instead of resetting it (so an unrelated tap elsewhere on the day screen
+// doesn't interrupt the timer); autoStart begins counting down the first
+// time a given id is shown, with no manual "Старт" tap needed.
+function renderTimerBlock(container, seconds, onDone, label, opts){
+  opts = opts || {};
+  const id = opts.id || label || '';
+  if(!activeTimer || activeTimer.id !== id){
+    if(activeTimer && activeTimer.handle) clearInterval(activeTimer.handle);
+    activeTimer = { id, remaining: seconds, seconds, running:false, handle:null, onDone, autoStarted:false };
+  } else {
+    activeTimer.onDone = onDone;
+  }
+  const st = activeTimer;
+
   const wrap = el(`<div></div>`);
   wrap.appendChild(el(`<div class="muted" style="text-align:center;">${label||''}</div>`));
-  const disp = el(`<div class="timer-display">${remaining}</div>`);
+  const disp = el(`<div class="timer-display">${st.remaining}</div>`);
+  if(st.remaining<=5) disp.classList.add('warn');
   wrap.appendChild(disp);
   const controls = el(`<div class="row" style="justify-content:center; gap:8px;"></div>`);
   const startBtn = el(`<button class="small">▶ Старт</button>`);
@@ -2434,27 +2708,34 @@ function renderTimerBlock(container, seconds, onDone, label){
   wrap.appendChild(controls);
   container.appendChild(wrap);
 
+  st.disp = disp; st.startBtn = startBtn; st.pauseBtn = pauseBtn;
+
   function setRunning(r){
-    running = r;
-    startBtn.classList.toggle('timer-btn-active', running);
-    pauseBtn.classList.toggle('timer-btn-active', !running);
+    st.running = r;
+    startBtn.classList.toggle('timer-btn-active', st.running);
+    pauseBtn.classList.toggle('timer-btn-active', !st.running);
   }
   function flash(btn){
     btn.classList.add('timer-btn-active');
     setTimeout(()=>btn.classList.remove('timer-btn-active'), 220);
   }
-  setRunning(false);
+  setRunning(st.running);
 
-  function tick(){
-    remaining--;
-    disp.textContent = remaining;
-    if(remaining<=5) disp.classList.add('warn'); else disp.classList.remove('warn');
-    if(remaining<=0){ stopTimer(); setRunning(false); try{ navigator.vibrate && navigator.vibrate([120,60,120]); }catch(e){} if(onDone) onDone(); }
+  function startTicking(){
+    if(st.handle) clearInterval(st.handle);
+    st.handle = setInterval(timerTick, 1000);
   }
-  startBtn.addEventListener('click', ()=>{ stopTimer(); timerHandle=setInterval(tick,1000); setRunning(true); });
-  pauseBtn.addEventListener('click', ()=>{ stopTimer(); setRunning(false); });
-  plusBtn.addEventListener('click', ()=>{ remaining+=10; disp.textContent=remaining; disp.classList.remove('warn'); flash(plusBtn); });
-  resetBtn.addEventListener('click', ()=>{ stopTimer(); setRunning(false); remaining=seconds; disp.textContent=remaining; disp.classList.remove('warn'); });
+  startBtn.addEventListener('click', ()=>{ startTicking(); setRunning(true); });
+  pauseBtn.addEventListener('click', ()=>{ if(st.handle){ clearInterval(st.handle); st.handle=null; } setRunning(false); });
+  plusBtn.addEventListener('click', ()=>{ st.remaining+=10; disp.textContent=st.remaining; disp.classList.remove('warn'); flash(plusBtn); });
+  resetBtn.addEventListener('click', ()=>{ if(st.handle){ clearInterval(st.handle); st.handle=null; } setRunning(false); st.remaining=seconds; st.seconds=seconds; disp.textContent=st.remaining; disp.classList.remove('warn'); });
+
+  if(opts.autoStart && !st.autoStarted && !st.running && st.remaining>0){
+    st.autoStarted = true;
+    startTicking();
+    setRunning(true);
+  }
+
   return wrap;
 }
 
@@ -2487,26 +2768,52 @@ function renderDay(root, nav){
   }
   const stage = day.stageList[day.stageIdx];
   root.appendChild(el(`<div class="tag" style="margin-bottom:8px; display:inline-block;">День ${g.round}</div>`));
-  renderInlineNotes(root);
+  const aliveWithDayNote = alivePlayers().filter(p=>{
+    const r = roleById(p.roleId);
+    return r && r.custom && r.dayNote;
+  });
+  aliveWithDayNote.forEach(p=>{
+    const r = roleById(p.roleId);
+    root.appendChild(el(`<div class="muted" style="margin-bottom:8px;">💡 Гравець №${p.number} (${r.name}): ${r.dayNote}</div>`));
+  });
+  renderInlineNotes(root, {order: 100});
 
   if(stage==='speeches'){
     const num = day.speechOrder[day.speechIndex];
     const isLast = day.speechIndex >= day.speechOrder.length-1;
-    root.appendChild(el(`<div class="night-banner">Слово надається гравцю №${num}. <span class="muted">(${day.speechIndex+1} з ${day.speechOrder.length})</span></div>`));
+    let speechBanner;
+    if(day.speechIndex===0){
+      speechBanner = `Розпочинається денне обговорення. Слово надається гравцю №${num}.`;
+    } else {
+      const prevNum = day.speechOrder[day.speechIndex-1];
+      speechBanner = `Час вийшов. Дякую, гравцю №${prevNum}. Слово надається гравцю №${num}.`;
+    }
+    root.appendChild(el(`<div class="night-banner">${speechBanner} <span class="muted">(${day.speechIndex+1} з ${day.speechOrder.length})</span></div>`));
+    if(day.nominees.length>0){
+      root.appendChild(el(`<div class="muted">На голосуванні наразі: ${day.nominees.map(n=>'№'+n).join(', ')}</div>`));
+    } else {
+      root.appendChild(el(`<div class="muted">Наразі ще нікого не виставили на голосування.</div>`));
+    }
+    root.appendChild(aliveTeamHintEl());
+    if(Array.isArray(g.immunePlayers) && g.immunePlayers.length>0 && g.round<=2){
+      const names = g.immunePlayers.map(n=>'№'+n).join(', ');
+      const many = g.immunePlayers.length>1;
+      root.appendChild(el(`<div class="muted">🛡 ${many?'Гравці':'Гравець'} ${names} ма${many?'ють':'є'} імунітет — ${many?'їх':'його'} не можна виставити на голосування.</div>`));
+    }
     const card = el(`<div class="card"></div>`);
-    renderTimerBlock(card, timers.speech, ()=>{}, `Промова №${num} · ${timers.speech} сек`);
+    renderTimerBlock(card, timers.speech, ()=>{}, `Промова №${num} · ${timers.speech} сек`, {id:`day-speech-${g.round}-${day.speechIndex}`, autoStart:true});
     root.appendChild(card);
 
     {
       const pickCard = el(`<div class="card"></div>`);
-      pickCard.appendChild(el(`<div class="muted" style="margin-bottom:6px;">Запитай гравця №${num}: чи хоче він когось виставити на голосування? (необов'язково)</div>`));
+      pickCard.appendChild(el(`<div class="muted" style="margin-bottom:6px;">Запитай гравця №${num}: чи хоче він когось виставити на голосування, в тому числі себе? (необов'язково)</div>`));
       const grid = el(`<div class="player-grid"></div>`);
       day.nominateSelection = day.nominateSelection===undefined ? null : day.nominateSelection;
       g.players.forEach(p=>{
         const immune = hasImmunity(p.number);
-        const eligible = p.alive && p.number!==num && !immune;
-        const isSpeaker = p.number===num;
         const isNominated = day.nominees.includes(p.number);
+        const eligible = p.alive && !immune && !isNominated;
+        const isSpeaker = p.number===num;
         const cls = [
           !p.alive ? 'dead' : '',
           immune ? 'immune' : '',
@@ -2514,7 +2821,7 @@ function renderDay(root, nav){
           (isSpeaker && day.nominateSelection!==p.number) ? 'speaker-now' : '',
           (isNominated && day.nominateSelection!==p.number && !isSpeaker) ? 'already-nominated' : '',
         ].join(' ');
-        const btn = el(`<button class="player-btn ${cls}" ${roleColor(p.roleId)?`style="background:${roleColor(p.roleId)}; border-color:${roleColor(p.roleId)};"`:''}>${p.number}</button>`);
+        const btn = el(`<button class="player-btn ${cls}" ${roleColor(p.roleId)?`style="background:${roleColor(p.roleId)}; border-color:${roleColor(p.roleId)};"`:''}>${p.number}${roleIconSpan(p.roleId)}</button>`);
         if(!eligible) btn.disabled = true;
         btn.addEventListener('click', ()=>{
           if(!eligible) return;
@@ -2525,14 +2832,6 @@ function renderDay(root, nav){
       });
       pickCard.appendChild(grid);
       root.appendChild(pickCard);
-      if(day.nominees.length>0){
-        root.appendChild(el(`<div class="muted">На голосуванні наразі: ${day.nominees.map(n=>'№'+n).join(', ')}</div>`));
-      } else {
-        root.appendChild(el(`<div class="muted">Наразі ще нікого не виставили на голосування.</div>`));
-      }
-      if(g.immunePlayer!=null && g.round<=2){
-        root.appendChild(el(`<div class="muted">🛡 Гравець №${g.immunePlayer} має імунітет — його не можна виставити на голосування.</div>`));
-      }
     }
 
     const navWrap = el(`<div class="app-nav"></div>`);
@@ -2561,6 +2860,7 @@ function renderDay(root, nav){
     } else {
       root.appendChild(el(`<div class="card"><h3>Голосування</h3><div class="theme-text">Скажи вголос: на голосування виставлені гравці під номерами ${day.nominees.map(n=>'№'+n).join(', ')}.</div></div>`));
     }
+    root.appendChild(aliveTeamHintEl());
     const navWrap = el(`<div class="app-nav"></div>`);
     const backBtn = el(`<button class="ghost">Назад</button>`);
     backBtn.disabled = undoStack.length===0;
@@ -2576,7 +2876,7 @@ function renderDay(root, nav){
   if(stage==='balagan'){
     root.appendChild(el(`<div class="night-banner"><b>Оголошується балаган!</b><br>Тепер усі можуть говорити одночасно й перебивати одне одного.</div>`));
     const card = el(`<div class="card"></div>`);
-    renderTimerBlock(card, timers.balagan, ()=>{}, `Балаган · ${timers.balagan} сек`);
+    renderTimerBlock(card, timers.balagan, ()=>{}, `Балаган · ${timers.balagan} сек`, {id:`day-balagan-${g.round}`, autoStart:true});
     root.appendChild(card);
     const navWrap = el(`<div class="app-nav"></div>`);
     const backBtn = el(`<button class="ghost">Назад</button>`);
@@ -2595,7 +2895,7 @@ function renderDay(root, nav){
     const num = day.nominees[day.defenseIndex];
     root.appendChild(el(`<div class="night-banner">Гравець №${num} — виправдувальна промова.</div>`));
     const card = el(`<div class="card"></div>`);
-    renderTimerBlock(card, timers.voteSpeech, ()=>{}, `№${num} · ${timers.voteSpeech} сек`);
+    renderTimerBlock(card, timers.voteSpeech, ()=>{}, `№${num} · ${timers.voteSpeech} сек`, {id:`day-defense-${g.round}-${num}`, autoStart:true});
     root.appendChild(card);
     const navWrap = el(`<div class="app-nav"></div>`);
     const backBtn = el(`<button class="ghost">Назад</button>`);
@@ -2620,18 +2920,15 @@ function renderDay(root, nav){
     const num = day.nominees[day.voteIndex];
     const isLastVote = day.voteIndex >= day.nominees.length-1;
     const count = day.voteCounts[num] || 0;
-    root.appendChild(el(`<div class="night-banner">Голосуємо за гравця №${num}. <span class="muted">(${day.voteIndex+1} з ${day.nominees.length})</span></div>`));
+    const voteIntro = day.voteIndex===0 ? 'Переходимо до фази голосування. ' : '';
+    root.appendChild(el(`<div class="night-banner">${voteIntro}Хто голосує проти гравця №${num}? <span class="muted">(${day.voteIndex+1} з ${day.nominees.length})</span></div>`));
+    root.appendChild(aliveTeamHintEl());
     root.appendChild(el(`<div class="card"><div style="line-height:1.6;">А зараз буде проводитись голосування. Попереджаю: голос буде зараховано тільки на рахунок «три», не раніше і не пізніше. Показувати жестами, за кого голосувати, не можна.</div></div>`));
     const card2 = el(`<div class="card"></div>`);
     card2.appendChild(el(`<div class="muted" style="text-align:center; margin-bottom:8px;">Скільки рук підняли за №${num}</div>`));
-    const row = el(`<div class="row" style="justify-content:center; align-items:center; gap:16px;"></div>`);
-    const minus = el(`<button class="small ghost">−</button>`);
-    const disp = el(`<div class="timer-display" style="margin:0; font-size:40px;">${count}</div>`);
-    const plus = el(`<button class="small ghost">+</button>`);
-    minus.addEventListener('click', ()=>{ day.voteCounts[num] = Math.max(0,(day.voteCounts[num]||0)-1); saveGame(); render(); });
-    plus.addEventListener('click', ()=>{ day.voteCounts[num] = (day.voteCounts[num]||0)+1; saveGame(); render(); });
-    row.appendChild(minus); row.appendChild(disp); row.appendChild(plus);
-    card2.appendChild(row);
+    const votesUsedByOthers = day.nominees.reduce((sum,n,i)=> i===day.voteIndex ? sum : sum + (day.voteCounts[n]||0), 0);
+    const maxVotes = Math.max(0, alivePlayers().length - votesUsedByOthers);
+    card2.appendChild(renderVoteCountControl(count, maxVotes, (n)=>{ day.voteCounts[num] = n; }));
     root.appendChild(card2);
     const navWrap = el(`<div class="app-nav"></div>`);
     const backBtn = el(`<button class="ghost">Назад</button>`);
@@ -2663,7 +2960,7 @@ function renderDay(root, nav){
       const summary = day.nominees.map(n=>`№${n} — ${counts[n]||0}`).join(', ');
       root.appendChild(el(`<div class="card"><h3>Підсумок голосування</h3><div class="muted">${summary}</div></div>`));
       if(maxCount===0){
-        root.appendChild(el(`<div class="night-banner">Ніхто не набрав жодного голосу. Оголоси: сьогодні ніхто не вибуває.</div>`));
+        root.appendChild(el(`<div class="night-banner">Ніхто не набрав жодного голосу. Оголоси: сьогодні ніхто не вибуває. Настає ніч. Усі засинають.</div>`));
         const next = el(`<button class="primary">Завершити день</button>`);
         next.addEventListener('click', ()=>{ pushUndo(); finishDay(); });
         navWrap.appendChild(backBtn); navWrap.appendChild(next);
@@ -2698,7 +2995,7 @@ function renderDay(root, nav){
       const isLastTS = day.tieSpeechIndex >= day.tieCandidates.length-1;
       root.appendChild(el(`<div class="night-banner">Повторна промова: гравець №${num}. <span class="muted">(${day.tieSpeechIndex+1} з ${day.tieCandidates.length})</span></div>`));
       const card = el(`<div class="card"></div>`);
-      renderTimerBlock(card, state.settings.timers.repeatSpeech, ()=>{}, `№${num} · ${state.settings.timers.repeatSpeech} сек`);
+      renderTimerBlock(card, state.settings.timers.repeatSpeech, ()=>{}, `№${num} · ${state.settings.timers.repeatSpeech} сек`, {id:`day-tiespeech-${g.round}-${num}`, autoStart:true});
       root.appendChild(card);
       const next = el(`<button class="primary">${isLastTS ? 'Далі — переголосування' : 'Наступний'}</button>`);
       next.addEventListener('click', ()=>{
@@ -2721,14 +3018,9 @@ function renderDay(root, nav){
       root.appendChild(card);
       const card2 = el(`<div class="card"></div>`);
       card2.appendChild(el(`<div class="muted" style="text-align:center; margin-bottom:8px;">Скільки рук підняли за №${num}</div>`));
-      const row = el(`<div class="row" style="justify-content:center; align-items:center; gap:16px;"></div>`);
-      const minus = el(`<button class="small ghost">−</button>`);
-      const disp = el(`<div class="timer-display" style="margin:0; font-size:40px;">${count}</div>`);
-      const plus = el(`<button class="small ghost">+</button>`);
-      minus.addEventListener('click', ()=>{ day.tieVoteCounts[num] = Math.max(0,(day.tieVoteCounts[num]||0)-1); saveGame(); render(); });
-      plus.addEventListener('click', ()=>{ day.tieVoteCounts[num] = (day.tieVoteCounts[num]||0)+1; saveGame(); render(); });
-      row.appendChild(minus); row.appendChild(disp); row.appendChild(plus);
-      card2.appendChild(row);
+      const tieVotesUsedByOthers = day.tieCandidates.reduce((sum,n,i)=> i===day.tieVoteIndex ? sum : sum + (day.tieVoteCounts[n]||0), 0);
+      const maxVotesTie = Math.max(0, alivePlayers().length - tieVotesUsedByOthers);
+      card2.appendChild(renderVoteCountControl(count, maxVotesTie, (n)=>{ day.tieVoteCounts[num] = n; }));
       root.appendChild(card2);
       const next = el(`<button class="primary">${isLastTV ? 'Далі' : 'Наступний'}</button>`);
       next.addEventListener('click', ()=>{
@@ -2763,7 +3055,7 @@ function renderDay(root, nav){
 
     if(day.resultPhase==='announce'){
       const num = day.eliminatedNumber;
-      root.appendChild(el(`<div class="night-banner">Скажи гравцям: «Гравець під номером ${num} вибуває з гри».</div>`));
+      root.appendChild(el(`<div class="night-banner">Скажи гравцям: «За результатами голосування місто покидає гравець під номером ${num}».</div>`));
       const next = el(`<button class="primary">Далі — останнє слово</button>`);
       next.addEventListener('click', ()=>{
         pushUndo();
@@ -2779,11 +3071,11 @@ function renderDay(root, nav){
 
     if(day.resultPhase==='lastword'){
       const num = day.eliminatedNumber;
-      root.appendChild(el(`<div class="night-banner">Останнє слово гравця №${num}.</div>`));
+      root.appendChild(el(`<div class="night-banner">Гравець номер ${num}, у вас є ${state.settings.timers.lastWord} секунд на останнє слово.</div>`));
       const card = el(`<div class="card"></div>`);
-      renderTimerBlock(card, state.settings.timers.lastWord, ()=>{}, `№${num} · ${state.settings.timers.lastWord} сек`);
+      renderTimerBlock(card, state.settings.timers.lastWord, ()=>{}, `№${num} · ${state.settings.timers.lastWord} сек`, {id:`day-lastword-${g.round}-${num}`});
       root.appendChild(card);
-      const next = el(`<button class="primary">Завершити день</button>`);
+      const next = el(`<button class="primary">Завершити день · Настає ніч</button>`);
       next.addEventListener('click', ()=>{ stopTimer(); pushUndo(); finishDay(); });
       navWrap.appendChild(backBtn); navWrap.appendChild(next);
       nav.appendChild(navWrap);
@@ -2814,20 +3106,22 @@ function renderEnd(root, nav){
     if(w==='black') s.stats.black++;
     else if(w==='red') s.stats.red++;
     else if(w==='maniac') s.stats.maniac++;
+    else if(w==='draw'){ if(s.stats.draws==null) s.stats.draws = 0; s.stats.draws++; }
     g.statsRecorded = true;
     saveSettings();
     saveGame();
   }
-  const winner = w==='red' ? 'Мирні перемогли!' : (w==='maniac' ? 'Маніяк переміг!' : 'Мафія перемогла!');
+  const winner = w==='red' ? 'Мирні перемогли!' : (w==='maniac' ? 'Маніяк переміг!' : (w==='draw' ? 'Нічия!' : 'Мафія перемогла!'));
   const congrats = w==='red' ? ((g.theme&&g.theme.peacefulWin)||'Мафії більше немає.')
-    : w==='maniac' ? 'Лишились тільки Маніяк і по одному з кожної команди — і Маніяк забрав усе собі.'
+    : w==='maniac' ? 'Маніяк лишився сам на сам з мирним — і забрав перемогу собі.'
+    : w==='draw' ? 'Лишились тільки Маніяк і один мафіозі — далі голосувати нема сенсу, оголошується нічия.'
     : ((g.theme&&g.theme.mafiaWin)||'Мафію вже не переголосувати.');
   root.appendChild(el(`<div class="card"><h2>${winner}</h2><div class="muted" style="margin-top:4px;">${congrats}</div><div class="muted" style="margin-top:8px;">Раунд: ${g.round}</div></div>`));
   const card = el(`<div class="card"><h3>Активні ролі</h3><div class="assign-list" id="finalList"></div></div>`);
   const list = card.querySelector('#finalList');
   g.players.filter(p=>p.roleId!=='peaceful').forEach(p=>{
     const r = roleById(p.roleId);
-    list.appendChild(el(`<div class="kv"><span>№${p.number} ${p.alive?'':'(вибув)'}</span><span><span class="team-dot ${r.team}"></span>${r.name}</span></div>`));
+    list.appendChild(el(`<div class="kv"><span>№${p.number} ${p.alive?'':'(вибув)'}</span><span><span class="team-dot ${r.team}"></span>${roleIcon(p.roleId)} ${r.name}</span></div>`));
   });
   root.appendChild(card);
   const navWrap = el(`<div class="app-nav"></div>`);
@@ -2848,6 +3142,80 @@ function closeNotes(){
   state.screen = preNotesScreen || 'setup';
   render();
 }
+
+let preRoleEditScreen = null;
+let roleEditOpenFor = null;
+function openRoleEdit(){
+  if(!state.game) return;
+  preRoleEditScreen = state.screen;
+  roleEditOpenFor = null;
+  state.screen = 'roleedit';
+  render();
+}
+function closeRoleEdit(){
+  state.screen = preRoleEditScreen || 'setup';
+  preRoleEditScreen = null;
+  roleEditOpenFor = null;
+  render();
+}
+function renderRoleEdit(root, nav){
+  const g = state.game;
+  root.appendChild(el(`<div class="card"><h3>Змінити роль гравця</h3><div class="muted">Якщо вночі знайомства (чи будь-коли) помилково обрала не того гравця — виправ тут, без повернення назад по кроках. Зверни увагу: зміна ролі посеред гри не перераховує те, що вже сталось цієї ночі чи дня.</div></div>`));
+  const list = el(`<div class="assign-list"></div>`);
+  g.players.forEach(p=>{
+    const row = el(`<div class="order-row"></div>`);
+    const curRole = roleById(p.roleId);
+    const color = p.roleId ? roleColor(p.roleId) : null;
+    const info = el(`<div style="flex:1; display:flex; align-items:center; gap:10px;">
+      <span style="font-family:'IBM Plex Mono',monospace; width:30px;">№${p.number}</span>
+      <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; font-size:13px; ${color?`background:${color}; border:1px solid ${color}; color:#fff;`:'background:var(--panel-2); border:1px solid var(--line);'}">${p.roleId?(roleIcon(p.roleId)||p.number):'–'}</span>
+      <span>${curRole ? curRole.name : 'Без ролі'}${!p.alive?' · мертвий':''}</span>
+    </div>`);
+    const changeBtn = el(`<button class="small ghost">Змінити</button>`);
+    changeBtn.addEventListener('click', ()=>{
+      roleEditOpenFor = (roleEditOpenFor===p.number) ? null : p.number;
+      render();
+    });
+    row.appendChild(info);
+    row.appendChild(changeBtn);
+    list.appendChild(row);
+
+    if(roleEditOpenFor===p.number){
+      const picker = el(`<div class="row wrap" style="margin:4px 0 14px; gap:6px;"></div>`);
+      state.settings.roles.forEach(r=>{
+        if((r.count||0)<=0 && r.id!==p.roleId) return;
+        const rc = roleColor(r.id);
+        const chip = el(`<button class="small ${p.roleId===r.id?'timer-btn-active':''}" ${rc?`style="border-color:${rc};"`:''}>${roleIcon(r.id)||''} ${r.name}</button>`);
+        chip.addEventListener('click', ()=>{
+          pushUndo();
+          p.roleId = r.id;
+          roleEditOpenFor = null;
+          saveGame();
+          render();
+        });
+        picker.appendChild(chip);
+      });
+      const noneChip = el(`<button class="small ${!p.roleId?'timer-btn-active':''}">Без ролі</button>`);
+      noneChip.addEventListener('click', ()=>{
+        pushUndo();
+        p.roleId = null;
+        roleEditOpenFor = null;
+        saveGame();
+        render();
+      });
+      picker.appendChild(noneChip);
+      list.appendChild(picker);
+    }
+  });
+  root.appendChild(list);
+
+  const navWrap = el(`<div class="app-nav"></div>`);
+  const back = el(`<button class="primary">Готово</button>`);
+  back.addEventListener('click', closeRoleEdit);
+  navWrap.appendChild(back);
+  nav.appendChild(navWrap);
+}
+
 function renderNotes(root, nav){
   const s = state.settings;
   root.appendChild(el(`<div class="card"><h3>Мої підказки</h3><div class="muted" style="margin-bottom:8px;">Наприклад, які жести прийняті саме у вашій компанії. Зберігається автоматично.</div></div>`));
@@ -2864,7 +3232,7 @@ function renderNotes(root, nav){
 }
 
 const ROLE_RULES = [
-  {id:'don', name:'Дон мафії', text:'Головний у чорній команді. Прокидається двічі за ніч: спершу разом з мафією, щоб обрати спільну жертву, вдруге — сам, щоб перевірити, чи є серед гравців Шериф.'},
+  {id:'don', name:'Дон мафії', text:'Головний у чорній команді. Прокидається двічі за ніч: спершу разом з мафією, щоб обрати спільну жертву, вдруге — сам, щоб перевірити одного гравця і дізнатись, чи він Шериф або Журналіст.'},
   {id:'mafia', name:'Мафія', text:'Допомагає Дону вирішувати, кого вбити вночі. Якщо Дон мертвий, мафія вбиває самостійно (якщо лишилось хоча б двоє — блокування одного з них Злодієм чи Повією не зупиняє вбивство).'},
   {id:'zlodiy', name:'Злодій', text:'Прокидається вночі і блокує хід одного гравця. Якщо це активна роль червоної команди — вона не виконає дію цієї ночі. Не можна блокувати того самого гравця двічі поспіль. Якщо заблокувати живого Дона — вбивства мафії не станеться. Якщо Дон мертвий і лишилась рівно 1 мафія — блокування її теж скасовує вбивство. Коли Злодій лишається останнім живим у чорній команді, він сам починає вбивати вночі.'},
   {id:'courtesan', name:'Повія', text:'Вночі блокує хід одного гравця — так само, як Злодій, за тими самими правилами. Не можна блокувати того самого гравця двічі поспіль. Рахується за мирних, за мафію або сама за себе — обирається в налаштуваннях.'},
@@ -3160,7 +3528,7 @@ function renderHistory(root, nav){
         if(entry.summary && entry.summary.checks && entry.summary.checks.length){
           entry.summary.checks.forEach(c=>{
             let line='';
-            if(c.type==='don') line = `Дон перевірив №${c.target}: ${c.result?'це шериф':'не шериф'}`;
+            if(c.type==='don') line = `Дон перевірив №${c.target}: ${c.result==='sheriff'?'це Шериф':(c.result==='journalist'?'це Журналіст':'не Шериф і не Журналіст')}`;
             if(c.type==='sheriff') line = `Шериф перевірив №${c.target}: колір — ${c.result==='black'?'чорний':'червоний'}`;
             if(c.type==='journalist') line = `Журналіст: №${c.targets[0]} і №${c.targets[1]} — ${c.sameTeam?'одна команда':'різні команди'}`;
             card.appendChild(el(`<div class="muted" style="margin-top:4px;">${line}</div>`));
@@ -3203,7 +3571,27 @@ render = function(){
   else if(state.screen==='rules') renderRules(root, nav);
   else if(state.screen==='stats') renderStats(root, nav);
   else if(state.screen==='roledeal') renderRoleDeal(root, nav);
+  else if(state.screen==='roleedit') renderRoleEdit(root, nav);
   else { state.screen='setup'; state.game=null; clearGame(); renderSetup(root, nav); }
+
+  // defensive: make sure there is ever only ever one of these, however this got called
+  nav.querySelectorAll('.role-fix-row').forEach(n=>n.remove());
+  if(state.game && ['acquaint','night','day'].includes(state.screen)){
+    const fixRow = el(`<div class="role-fix-row"></div>`);
+    const fixBtn = el(`<button class="ghost small">🎭 Змінити роль гравця</button>`);
+    fixBtn.addEventListener('click', openRoleEdit);
+    fixRow.appendChild(fixBtn);
+    nav.appendChild(fixRow);
+  }
+
+  // the footer can be one or two rows tall depending on the screen (e.g. the
+  // role-fix button adds a second row) — measure it for real after each
+  // render and reserve exactly that much space, so content never ends up
+  // hidden behind it, however many rows it has right now.
+  requestAnimationFrame(()=>{
+    const h = nav.offsetHeight;
+    if(h>0) document.documentElement.style.setProperty('--footer-h', h+'px');
+  });
 };
 
 render();
@@ -3272,107 +3660,8 @@ document.addEventListener('click', (e)=>{
   }
 });
 
-(function(){
-  const splash = document.getElementById('splashOverlay');
-  const canvas = document.getElementById('splashCanvas');
-  if(!splash || !canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  const W = window.innerWidth, H = window.innerHeight;
-  canvas.width = W;
-  canvas.height = H;
-
-  const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#12151a';
-  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#eee9df';
-  const lampColor = getComputedStyle(document.documentElement).getPropertyValue('--lamp').trim() || '#e2a33d';
-
-  function drawScene(){
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, W, H);
-    ctx.textAlign = 'center';
-    const cx = W/2;
-    let cy = H/2 - 70;
-
-    ctx.font = '52px sans-serif';
-    ctx.fillText('🎭', cx, cy);
-    cy += 70;
-
-    ctx.fillStyle = textColor;
-    ctx.font = "700 36px 'Fraunces', serif";
-    ctx.fillText('Ведучий Мафії', cx, cy);
-    cy += 46;
-
-    ctx.font = "19px 'Fraunces', serif";
-    ctx.fillStyle = textColor;
-    ctx.fillText('Розроблено для', cx, cy);
-    cy += 30;
-    ctx.fillStyle = lampColor;
-    ctx.fillText('The Corner Studio', cx, cy);
-    cy += 30;
-    ctx.fillStyle = textColor;
-    ctx.fillText('— Вікториною Новак', cx, cy);
-  }
-
-  function startDissolve(){
-    const cols = 28, rows = 44;
-    const cellW = W / cols, cellH = H / rows;
-    const totalSweep = 4700;
-    const cells = [];
-    for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
-        const nx = (c+0.5)/cols, ny = (r+0.5)/rows;
-        const edgeDist = Math.min(nx, 1-nx, ny, 1-ny) * 2; // 0 at edge, ~1 at center
-        const delay = edgeDist * totalSweep + Math.random()*150;
-        cells.push({ x:c*cellW, y:r*cellH, delay, cleared:false });
-      }
-    }
-
-    let dismissed = false;
-    let rafId = null;
-    function dismissInstant(){
-      if(dismissed) return;
-      dismissed = true;
-      if(rafId) cancelAnimationFrame(rafId);
-      splash.remove();
-    }
-    document.getElementById('splashClose').addEventListener('click', dismissInstant);
-
-    const startTime = performance.now();
-    function tick(now){
-      const elapsed = now - startTime;
-      let allCleared = true;
-      for(const cell of cells){
-        if(cell.cleared) continue;
-        if(elapsed >= cell.delay){
-          ctx.clearRect(cell.x - 1, cell.y - 1, cellW + 2, cellH + 2);
-          cell.cleared = true;
-        } else {
-          allCleared = false;
-        }
-      }
-      if(!allCleared && !dismissed){
-        rafId = requestAnimationFrame(tick);
-      } else if(!dismissed){
-        dismissInstant();
-      }
-    }
-    rafId = requestAnimationFrame(tick);
-  }
-
-  // make sure the custom font is actually loaded before we draw the text onto the canvas,
-  // but never wait more than a moment for it
-  let started = false;
-  function startOnce(){ if(started) return; started = true; drawScene(); startDissolve(); }
-  if(document.fonts && document.fonts.ready){
-    document.fonts.load("700 36px 'Fraunces'").catch(()=>{});
-    document.fonts.load("19px 'Fraunces'").catch(()=>{});
-    document.fonts.ready.then(startOnce).catch(startOnce);
-    setTimeout(startOnce, 500);
-  } else {
-    startOnce();
-  }
-})();
 </script>
 </body>
 </html>
+
+</body></html>
